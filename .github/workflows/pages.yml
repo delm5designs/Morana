@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [claude/keen-rubin-cawc6u]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
