@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Morana Orrery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<link rel="stylesheet" href="_ds/morana-design-system-7dc00243-9061-4778-968a-63ab84ccbd99/tokens/fonts.css">
+<style>
+  html,body{margin:0;height:100%;background:#2a2030;overflow:hidden}
+  three-d-stage{display:block;width:100vw;height:100vh}
+  three-d-stage:not(:defined){visibility:hidden}
+  .label{position:fixed;left:5vw;top:32px;font-family:'Newsreader',serif;font-variant:small-caps;letter-spacing:.08em;font-size:22px;color:#efe3a9;pointer-events:none}
+  .tag{position:fixed;left:5vw;bottom:32px;font-family:'Newsreader',serif;font-weight:300;font-size:20px;color:#efe3a9;pointer-events:none}
+  .tag em{color:#b9aecb}
+</style>
+</head>
+<body>
+<three-d-stage name="morana-orrery" background="#2a2030" autorotate></three-d-stage>
+<div class="label">Morana</div>
+<div class="tag">Every spring starts with a <em>winter</em>.</div>
+<script src="three-d-stage.js"></script>
+<script type="module">
+const stage = document.querySelector('three-d-stage');
+const { THREE } = await stage.ready;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const C = { cream:0xefe3a9, olive:0x6f7c33, olive4:0x88944c, sage:0x4e7a55, sage4:0x668f66, plum:0x56466b, plum4:0x6a5d7b };
+const mat = (name, color, o={}) => Object.assign(new THREE.MeshStandardMaterial({ color, roughness:.6, metalness:.1, ...o }), { name });
+
+const M = {
+  sun:   mat('cream_sun', C.cream, { emissive:C.cream, emissiveIntensity:.85, roughness:.9 }),
+  orbit: mat('cream_orbit', C.cream, { emissive:C.cream, emissiveIntensity:.35, roughness:.8 }),
+  olive: mat('olive', C.olive4, { roughness:.55 }),
+  sage:  mat('sage', C.sage4, { roughness:.55 }),
+  plum:  mat('plum', C.plum4, { roughness:.5 }),
+  pulse: mat('pulse', C.sage, { emissive:C.sage, emissiveIntensity:.6, transparent:true, opacity:1 })
+};
+
+const root = new THREE.Group(); root.name = 'morana_orrery';
+const Y = 0.16; // lift so the lowest planet clears the ground
+
+const sun = new THREE.Mesh(new THREE.SphereGeometry(0.09, 64, 48), M.sun);
+sun.name = 'sun'; sun.position.y = Y; root.add(sun);
+const halo = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.0025, 12, 128), M.orbit);
+halo.name = 'sun_halo'; halo.rotation.x = Math.PI/2; halo.position.y = Y; root.add(halo);
+
+// Four orbits: 16s / 26s / 40s / 58s, alternating direction, one body each
+const specs = [
+  { r:.22, period:16, dir: 1, size:.022, m:M.sage,  tilt:.05,  phase:0.4 },
+  { r:.34, period:26, dir:-1, size:.032, m:M.olive, tilt:-.08, phase:2.1, moon:true },
+  { r:.48, period:40, dir: 1, size:.042, m:M.plum,  tilt:.06,  phase:4.0, ring:true },
+  { r:.64, period:58, dir:-1, size:.026, m:M.sun,   tilt:-.04, phase:5.3 }
+];
+const orbits = specs.map((s, i) => {
+  const plane = new THREE.Group(); plane.name = `orbit_${i+1}_plane`;
+  plane.position.y = Y; plane.rotation.z = s.tilt; root.add(plane);
+  const track = new THREE.Mesh(new THREE.TorusGeometry(s.r, 0.0022, 12, 256), M.orbit);
+  track.name = `orbit_${i+1}_track`; track.rotation.x = Math.PI/2; plane.add(track);
+  const carrier = new THREE.Group(); carrier.name = `orbit_${i+1}_carrier`; carrier.rotation.y = s.phase; plane.add(carrier);
+  const body = new THREE.Group(); body.name = `planet_${i+1}`; body.position.x = s.r; carrier.add(body);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(s.size, 48, 32), s.m);
+  ball.name = `planet_${i+1}_body`; body.add(ball);
+  let moonPivot = null;
+  if (s.ring) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(s.size*1.75, 0.0025, 10, 96), M.orbit);
+    ring.name = `planet_${i+1}_ring`; ring.rotation.x = Math.PI/2 - .45; body.add(ring);
+    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(s.size*1.45, 0.0015, 10, 96), M.orbit);
+    ring2.name = `planet_${i+1}_ring_inner`; ring2.rotation.x = Math.PI/2 - .45; body.add(ring2);
+  }
+  if (s.moon) {
+    moonPivot = new THREE.Group(); moonPivot.name = `planet_${i+1}_moon_pivot`; body.add(moonPivot);
+    const moon = new THREE.Mesh(new THREE.SphereGeometry(.009, 24, 16), M.sun);
+    moon.name = `planet_${i+1}_moon`; moon.position.x = s.size + .03; moonPivot.add(moon);
+  }
+  return { s, carrier, moonPivot };
+});
+
+// Pulse ring expanding outward every 7s: sage -> olive -> plum, fading
+const pulse = new THREE.Mesh(new THREE.TorusGeometry(1, 0.003, 10, 256), M.pulse);
+pulse.name = 'pulse_ring'; pulse.rotation.x = Math.PI/2; pulse.position.y = Y; root.add(pulse);
+const cSage = new THREE.Color(C.sage4), cOlive = new THREE.Color(C.olive4), cPlum = new THREE.Color(C.plum4), tmp = new THREE.Color();
+
+pulse.scale.set(.6, .6, 1);
+stage.setObject(root);
+
+const t0 = performance.now();
+const ease = t => 1 - Math.pow(1 - t, 2.2);
+function tick(now) {
+  const t = reduce ? 0 : (now - t0) / 1000;
+  for (const o of orbits) {
+    o.carrier.rotation.y = o.s.phase + o.s.dir * (t / o.s.period) * Math.PI * 2;
+    if (o.moonPivot) o.moonPivot.rotation.y = (t / 4.2) * Math.PI * 2;
+  }
+  const p = reduce ? .5 : (t % 7) / 7, e = ease(p);
+  const r = 0.13 + e * 0.62;
+  pulse.scale.set(r, r, 1);
+  if (p < .5) tmp.lerpColors(cSage, cOlive, p*2); else tmp.lerpColors(cOlive, cPlum, (p-.5)*2);
+  M.pulse.color.copy(tmp); M.pulse.emissive.copy(tmp);
+  M.pulse.opacity = reduce ? .6 : Math.min(1, p*6) * (1 - p);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

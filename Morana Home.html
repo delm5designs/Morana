@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Morana</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<link rel="stylesheet" href="_ds/morana-design-system-7dc00243-9061-4778-968a-63ab84ccbd99/styles.css">
+<style>
+  html,body{margin:0;background:var(--surface-page);font-family:'Archivo',sans-serif;color:var(--text-body)}
+  body.open{overflow:hidden}
+  .top{position:relative;height:100vh;min-height:560px;background:var(--surface-inverse);overflow:hidden}
+  a{color:var(--text-link);text-decoration:none;transition:color .2s}
+  a:hover{color:var(--text-link-hover)}
+  three-d-stage{position:absolute;inset:0;display:block}
+  three-d-stage:not(:defined){visibility:hidden}
+  :focus-visible{outline:2px solid var(--plum-200);outline-offset:2px}
+
+  header{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:28px 5vw;z-index:5;pointer-events:none}
+  header > *{pointer-events:auto}
+  .wordmark{font-family:'Newsreader',serif;font-variant:small-caps;letter-spacing:.08em;font-size:24px;color:var(--cream-400);background:none;border:0;padding:0;cursor:pointer}
+  nav{display:flex;align-items:center;gap:32px}
+  nav button.link{font:500 15px/1 'Archivo',sans-serif;color:var(--text-on-dark);background:none;border:0;padding:6px 0;cursor:pointer;transition:color .2s}
+  nav button.link:hover{color:var(--olive-300)}
+  nav button.link[aria-current="page"]{color:var(--plum-200)}
+  .lang{display:flex;gap:2px;border:1px solid var(--border-on-dark);border-radius:999px;padding:3px}
+  .lang button{font:600 12px/1 'Archivo',sans-serif;letter-spacing:.08em;color:var(--text-on-dark-muted);background:none;border:0;border-radius:999px;padding:6px 10px;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:var(--cream-400);color:var(--ink-700)}
+  body.open nav button.link{color:var(--text-strong)}
+  body.open nav button.link:hover{color:var(--accent)}
+  body.open nav button.link[aria-current="page"]{color:var(--text-reflective)}
+  body.open .lang{border-color:var(--border-subtle)}
+  body.open .lang button{color:var(--text-muted)}
+  body.open .lang button[aria-pressed="true"]{background:var(--ink-700);color:var(--cream-400)}
+  @media (max-width:760px){ body.open .wordmark{color:var(--text-strong)} }
+
+  .hero{position:absolute;left:5vw;bottom:9vh;z-index:3;width:min(560px,90vw);pointer-events:none;transition:opacity .6s cubic-bezier(.2,.8,.2,1),transform .6s cubic-bezier(.2,.8,.2,1)}
+  .hero .eyebrow{font:600 12px/1 'Archivo',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--olive-300);margin:0 0 20px}
+  .hero h1{font-family:'Newsreader',serif;font-weight:300;font-size:clamp(36px,min(6vw,10vh),92px);line-height:1.01;letter-spacing:-.024em;color:var(--cream-400);margin:0;max-width:14ch}
+  .hero h1 em{color:var(--plum-200)}
+  .hero .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px;pointer-events:auto}
+  .btn.ondark{background:var(--cream-400);color:var(--ink-700)}
+  .btn.ondark:hover{background:var(--plum-200)}
+  .btn.ghost{background:none;color:var(--cream-400);box-shadow:inset 0 0 0 1px var(--border-on-dark)}
+  .btn.ghost:hover{background:rgba(239,227,169,.1);box-shadow:inset 0 0 0 1px var(--cream-400)}
+  .btn.quiet{background:none;color:var(--text-strong);box-shadow:inset 0 0 0 1px var(--border-strong)}
+  .btn.quiet:hover{background:var(--accent-quiet);box-shadow:inset 0 0 0 1px var(--accent)}
+  .hero .hint{font:400 14px/1.5 'Archivo',sans-serif;color:var(--text-on-dark-muted);margin:24px 0 0}
+  body.open .hero{opacity:0;transform:translateY(14px)}
+
+  .labels{position:absolute;inset:0;z-index:2;pointer-events:none}
+  .plabel{position:absolute;left:0;top:0;display:flex;align-items:center;gap:10px;font:600 12px/1 'Archivo',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--text-on-dark);background:none;border:0;padding:8px 4px;cursor:pointer;pointer-events:auto;white-space:nowrap;transition:color .2s,opacity .4s}
+  .plabel::before{content:"";width:22px;height:1px;background:var(--border-on-dark);transition:background .2s,width .2s}
+  .plabel.flip{flex-direction:row-reverse}
+  .plabel.dim{opacity:.18}
+  .plabel.hot{color:var(--olive-300)}
+  .plabel.hot::before{background:var(--olive-300);width:34px}
+  body.open .plabel{opacity:0;pointer-events:none}
+
+  .panel{position:fixed;top:0;right:0;bottom:0;width:min(600px,100vw);z-index:4;background:var(--surface-page);color:var(--text-body);overflow-y:auto;overflow-x:hidden;transform:translateX(100%);transition:transform .9s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 0 1px var(--border-subtle)}
+  body.open .panel{transform:none}
+  .panel-inner{padding:112px 48px 72px;display:flex;flex-direction:column;gap:40px}
+  .back{align-self:flex-start;white-space:nowrap;font:500 14px/1 'Archivo',sans-serif;color:var(--text-strong);background:none;border:1px solid var(--border-strong);border-radius:2px;padding:12px 18px;cursor:pointer;transition:background .2s,border-color .2s,transform .16s}
+  .back:hover{background:var(--accent-quiet);border-color:var(--accent)}
+  .back:active,.btn:active{transform:scale(.97)}
+  .eb{font:600 12px/1 'Archivo',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--text-accent);margin:0 0 18px}
+  .sec h2, .panel h2{font-family:'Newsreader',serif;font-weight:300;font-size:clamp(36px,4.2vw,54px);line-height:1.01;letter-spacing:-.024em;color:var(--text-strong);margin:0;text-wrap:pretty}
+  .sec h2 em, .panel h2 em{color:var(--text-reflective)}
+  .sec h3, .panel h3{font-family:'Newsreader',serif;font-weight:400;font-size:26px;line-height:1.1;letter-spacing:-.015em;color:var(--text-strong);margin:0}
+  .sec p, .panel p{font-size:17.5px;line-height:1.6;max-width:42ch;margin:0;text-wrap:pretty}
+  .lead{margin-top:20px !important}
+  .stack{display:flex;flex-direction:column;gap:16px}
+  .card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:2px;padding:24px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 2px rgba(42,32,48,.05)}
+  .card .dur{font:500 13px/1.3 'Archivo',sans-serif;color:var(--text-muted)}
+  .badge{align-self:flex-start;font:600 11px/1 'Archivo',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--text-reflective);border:1px solid var(--border-strong);border-radius:2px;padding:6px 8px}
+  .card.deferred{background:var(--surface-sunken);box-shadow:none}
+  .step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;padding:20px 0;border-top:1px solid var(--border-subtle)}
+  .step .n{font:600 13px/1.6 'Archivo',sans-serif;color:var(--text-accent);letter-spacing:.08em}
+  .step h3{font-size:22px;margin-bottom:6px}
+  blockquote{margin:0;padding:28px 0;border-top:1px solid var(--border-subtle);border-bottom:1px solid var(--border-subtle);font-family:'Newsreader',serif;font-weight:300;font-style:italic;font-size:28px;line-height:1.25;color:var(--text-reflective)}
+  .note{font-size:15px !important;color:var(--text-muted)}
+  .btn{align-self:flex-start;font:500 15px/1 'Archivo',sans-serif;color:var(--text-on-accent);background:var(--accent);border:0;border-radius:2px;padding:15px 22px;cursor:pointer;transition:background .2s,transform .16s}
+  .btn:hover{background:var(--accent-hover)}
+  form{display:flex;flex-direction:column;gap:20px}
+  label{display:flex;flex-direction:column;gap:8px;font:600 12px/1 'Archivo',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--text-accent)}
+  input,textarea{font:400 16px/1.5 'Archivo',sans-serif;color:var(--text-strong);background:var(--surface-card);border:1px solid var(--border-strong);border-radius:3px;padding:12px 14px;letter-spacing:0;text-transform:none}
+  input:focus,textarea:focus{outline:2px solid var(--focus-ring);outline-offset:2px}
+  ol.expect{margin:0;padding:0;list-style:none;counter-reset:e;display:flex;flex-direction:column}
+  ol.expect li{counter-increment:e;display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;padding:16px 0;border-top:1px solid var(--border-subtle);font-size:16px;line-height:1.55}
+  ol.expect li::before{content:"0" counter(e);font:600 13px/1.6 'Archivo',sans-serif;color:var(--text-accent);letter-spacing:.08em}
+  .sec{padding:96px 5vw;border-top:1px solid var(--border-subtle)}
+  .sec.card-tone{background:var(--surface-card)}
+  .wrap{max-width:1140px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+  .sec h2{font-size:clamp(34px,4.4vw,56px);max-width:18ch}
+  .steps3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px}
+  .steps3 .s{display:flex;flex-direction:column;gap:12px;padding-top:20px;border-top:1px solid var(--border-strong)}
+  .steps3 .n{font:600 13px/1 'Archivo',sans-serif;color:var(--text-accent);letter-spacing:.08em}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+  .grid3 .card .btn{margin-top:auto}
+  .grid3 .card{gap:12px}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:56px;align-items:start}
+  .cite{display:flex;flex-direction:column;gap:14px}
+  .cite .f{font-family:'Newsreader',serif;font-weight:300;font-size:24px;line-height:1.3;color:var(--text-strong);max-width:none}
+  .cite .who{font:600 13px/1 'Archivo',sans-serif;letter-spacing:.04em;color:var(--text-reflective)}
+  .closing{background:var(--surface-inverse);padding:120px 5vw;border:0}
+  .closing h2{color:var(--cream-400)} .closing h2 em{color:var(--plum-200)}
+  .closing p{color:var(--text-on-dark-muted)}
+  footer{background:var(--surface-inverse);color:var(--text-on-dark-muted);padding:48px 5vw;border-top:1px solid var(--border-on-dark)}
+  footer .wrap{flex-direction:row;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:24px}
+  footer .fm{font-family:'Newsreader',serif;font-variant:small-caps;letter-spacing:.08em;font-size:22px;color:var(--cream-400)}
+  footer .tl{font-family:'Newsreader',serif;font-style:italic;font-weight:300;font-size:17px;color:var(--text-on-dark-muted)}
+  footer nav button.link{color:var(--text-on-dark)}
+  footer small{font-size:13px;width:100%}
+  @media (max-width:760px){
+    .sec{padding:72px 6vw}
+    nav{gap:18px} nav button.link{display:none}
+    .panel-inner{padding:96px 24px 56px}
+    .hero{bottom:6vh}
+  }
+  @media (prefers-reduced-motion:reduce){ *{transition-duration:1ms !important} }
+</style>
+</head>
+<body>
+<div class="top" data-screen-label="Home hero">
+<three-d-stage name="morana-orrery" background="#2a2030"></three-d-stage>
+<div class="labels" id="labels"></div>
+
+<header>
+  <button class="wordmark" data-go="">Morana</button>
+  <nav>
+    <button class="link" data-go="programs"></button>
+    <button class="link" data-go="approach"></button>
+    <button class="link" data-go="about"></button>
+    <button class="link" data-go="contact"></button>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-lang="en" aria-pressed="true">EN</button>
+      <button data-lang="bg" aria-pressed="false">BG</button>
+    </div>
+  </nav>
+</header>
+
+<section class="hero" aria-live="polite">
+  <p class="eyebrow" id="heroEyebrow"></p>
+  <h1 id="heroTitle"></h1>
+  <div class="actions"><button class="btn ondark" data-go="contact" id="heroPrimary"></button><button class="btn ghost" data-go="programs" id="heroSecondary"></button></div>
+  <p class="hint" id="heroHint"></p>
+</section>
+</div>
+<main id="homeSections"></main>
+<footer><div class="wrap"><span class="fm" id="fMark">Morana</span><span class="tl" id="fTag"></span><nav id="fNav"></nav><small id="fLegal"></small></div></footer>
+
+<aside class="panel" id="panel" aria-hidden="true">
+  <div class="panel-inner" id="panelInner"></div>
+</aside>
+
+<script src="copy.js"></script>
+<script src="three-d-stage.js"></script>
+<script type="module">
+const stage = document.querySelector('three-d-stage');
+const { THREE } = await stage.ready;
+stage.shadowRoot.querySelectorAll('.toolbar,.note').forEach(n => n.style.display = 'none');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let lang = 'en', page = '';
+const UI = {
+  en: { nav:{programs:'Programs',approach:'Approach',about:'About',contact:'Contact'}, hint:'Choose a planet to open a page, or drag to look around.', back:'Back to the system', notYet:'Not yet offered', name:'Name', email:'Email', message:'What are you trying to learn', send:'Get in touch', thanks:'Thank you. We will reply within two working days.', write:'Or write to us directly at' },
+  bg: { nav:{programs:'Програми',approach:'Подход',about:'За нас',contact:'Контакт'}, hint:'Изберете планета, за да отворите страница, или завъртете с мишката.', back:'Обратно към системата', notYet:'Още не се предлага', name:'Име', email:'Имейл', message:'Какво искате да научите', send:'Свържете се с нас', thanks:'Благодарим. Ще отговорим в рамките на два работни дни.', write:'Или ни пишете директно на' }
+};
+
+/* ---------- model ---------- */
+const C = { cream:0xefe3a9, olive4:0x88944c, sage4:0x668f66, plum4:0x6a5d7b, sage:0x4e7a55 };
+const mat = (name, color, o={}) => Object.assign(new THREE.MeshStandardMaterial({ color, roughness:.6, metalness:.1, ...o }), { name });
+const M = {
+  sun:   mat('cream_sun', C.cream, { emissive:C.cream, emissiveIntensity:.85, roughness:.9 }),
+  orbit: mat('cream_orbit', C.cream, { emissive:C.cream, emissiveIntensity:.35, roughness:.8 }),
+  olive: mat('olive', C.olive4, { roughness:.55 }),
+  sage:  mat('sage', C.sage4, { roughness:.55 }),
+  plum:  mat('plum', C.plum4, { roughness:.5 }),
+  pulse: mat('pulse', C.sage, { emissive:C.sage, emissiveIntensity:.6, transparent:true })
+};
+const root = new THREE.Group(); root.name = 'morana_orrery';
+const Y = 0.16;
+const sun = new THREE.Mesh(new THREE.SphereGeometry(0.09, 64, 48), M.sun);
+sun.name = 'sun'; sun.position.y = Y; root.add(sun);
+const halo = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.0025, 12, 128), M.orbit);
+halo.rotation.x = Math.PI/2; halo.position.y = Y; root.add(halo);
+
+const specs = [
+  { page:'programs', r:.22, period:16, dir: 1, size:.022, m:M.sage,  tilt:.05,  phase:0.4 },
+  { page:'approach', r:.34, period:26, dir:-1, size:.032, m:M.olive, tilt:-.08, phase:2.1, moon:true },
+  { page:'about',    r:.48, period:40, dir: 1, size:.042, m:M.plum,  tilt:.06,  phase:4.0, ring:true },
+  { page:'contact',  r:.64, period:58, dir:-1, size:.026, m:M.sun,   tilt:-.04, phase:5.3 }
+];
+const orbits = specs.map((s, i) => {
+  const plane = new THREE.Group(); plane.position.y = Y; plane.rotation.z = s.tilt; root.add(plane);
+  const track = new THREE.Mesh(new THREE.TorusGeometry(s.r, 0.0022, 12, 256), M.orbit);
+  track.name = `orbit_${i+1}_track`; track.rotation.x = Math.PI/2; plane.add(track);
+  const carrier = new THREE.Group(); carrier.rotation.y = s.phase; plane.add(carrier);
+  const body = new THREE.Group(); body.name = `planet_${s.page}`; body.position.x = s.r; carrier.add(body);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(s.size, 48, 32), s.m);
+  ball.name = `planet_${s.page}_body`; ball.userData.page = s.page; body.add(ball);
+  // generous invisible hit target so small planets are easy to click
+  const hit = new THREE.Mesh(new THREE.SphereGeometry(Math.max(s.size*2.2, .06), 12, 8), new THREE.MeshBasicMaterial({ visible:false }));
+  hit.userData.page = s.page; body.add(hit);
+  if (s.ring) [1.75, 1.45].forEach((k, j) => {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(s.size*k, j ? .0015 : .0025, 10, 96), M.orbit);
+    ring.rotation.x = Math.PI/2 - .45; body.add(ring);
+  });
+  let moonPivot = null;
+  if (s.moon) {
+    moonPivot = new THREE.Group(); body.add(moonPivot);
+    const moon = new THREE.Mesh(new THREE.SphereGeometry(.009, 24, 16), M.sun);
+    moon.position.x = s.size + .03; moonPivot.add(moon);
+  }
+  return { s, carrier, body, ball, hit, moonPivot, scale:1 };
+});
+const pulse = new THREE.Mesh(new THREE.TorusGeometry(1, 0.003, 10, 256), M.pulse);
+pulse.rotation.x = Math.PI/2; pulse.position.y = Y; pulse.scale.set(.6,.6,1); root.add(pulse);
+const cSage = new THREE.Color(C.sage4), cOlive = new THREE.Color(C.olive4), cPlum = new THREE.Color(C.plum4), tmp = new THREE.Color();
+
+stage.setObject(root);
+const cam = stage._camera, controls = stage._controls;
+controls.autoRotate = !reduce; controls.autoRotateSpeed = .5;
+controls.enableZoom = false; // wheel scrolls the page
+if (matchMedia('(pointer: coarse)').matches) { controls.enableRotate = false; stage.shadowRoot.querySelector('canvas').style.touchAction = 'pan-y'; }
+let home = null; // captured after the stage frames the scene
+
+/* ---------- labels ---------- */
+const labelsEl = document.getElementById('labels');
+orbits.forEach(o => {
+  const b = document.createElement('button');
+  b.className = 'plabel'; b.dataset.go = o.s.page;
+  b.addEventListener('mouseenter', () => hover = o.s.page);
+  b.addEventListener('mouseleave', () => hover = null);
+  labelsEl.appendChild(b); o.label = b;
+});
+
+/* ---------- copy ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const title = (t, a) => `<h2>${esc(t)}${a ? ` <em>${esc(a)}</em>` : ''}</h2>`;
+const head = (p) => `<div><p class="eb">${esc(p.eyebrow)}</p>${title(p.title, p.accent)}<p class="lead">${esc(p.lead)}</p></div>`;
+const card = (it, deferred) => `<div class="card${deferred ? ' deferred' : ''}">${deferred ? `<span class="badge">${esc(UI[lang].notYet)}</span>` : ''}<h3>${esc(it.name)}</h3>${it.duration ? `<span class="dur">${esc(it.duration)}</span>` : ''}<p>${esc(it.body)}</p></div>`;
+const steps = arr => `<div>${arr.map(s => `<div class="step"><span class="n">${s.n}</span><div><h3>${esc(s.name)}</h3><p>${esc(s.body)}</p></div></div>`).join('')}</div>`;
+const cta = () => `<button class="btn" data-go="contact">${esc(MoranaCopy[lang].hero.primary)}</button>`;
+let sent = false;
+const pages = {
+  programs: c => { const p = c.programs, i = p.items; return `${head(p)}
+    <div class="stack"><div><h3>${esc(p.companyTitle)}</h3><p class="lead" style="margin-top:8px!important">${esc(p.companyLead)}</p></div>${card(i.project)}${card(i.workshop)}${card(i.retainer, true)}</div>
+    <div class="stack"><div><h3>${esc(p.individualTitle)}</h3><p class="lead" style="margin-top:8px!important">${esc(p.individualLead)}</p></div>${card(i.intensive)}${card(i.extensive, true)}</div>
+    <p class="note">${esc(p.pricingNote)}</p>${cta()}`; },
+  approach: c => { const p = c.approach; return `${head(p)}<blockquote>${esc(p.quote)}</blockquote>
+    <div class="stack"><h3>${esc(p.motivationTitle)}</h3><p>${esc(p.motivationBody)}</p></div>
+    <div class="stack"><h3>${esc(p.stepsTitle)}</h3>${steps(p.detail)}</div>${cta()}`; },
+  about: c => { const p = c.about; return `${head(p)}
+    <div class="stack"><h3>${esc(p.nameTitle)}</h3><p>${esc(p.nameBody)}</p></div>
+    <div class="stack"><h3>${esc(p.workTitle)}</h3><p>${esc(p.workBody)}</p></div>
+    <p class="note">${esc(p.teamNote)}</p>${cta()}`; },
+  contact: c => { const p = c.contact, u = UI[lang]; return `${head(p)}
+    ${sent ? `<div class="card"><p>${esc(u.thanks)}</p></div>` : `<form id="cform">
+      <label>${esc(u.name)}<input name="name" required autocomplete="name"></label>
+      <label>${esc(u.email)}<input name="email" type="email" required autocomplete="email"></label>
+      <label>${esc(u.message)}<textarea name="msg" rows="4" required></textarea></label>
+      <button class="btn" type="submit">${esc(u.send)}</button></form>`}
+    <p class="note">${esc(u.write)} <a href="mailto:${p.email}">${p.email}</a></p>
+    <div class="stack"><h3>${esc(p.expectTitle)}</h3><ol class="expect">${p.expect.map(e => `<li>${esc(e)}</li>`).join('')}</ol></div>`; }
+};
+
+function renderHome(c) {
+  const p = c.programs.items, s = c.steps, t = c.tracks, r = c.research, cl = c.closing;
+  const prog = (it) => `<div class="card"><span class="dur">${esc(it.duration)}</span><h3>${esc(it.name)}</h3><p>${esc(it.body)}</p><button class="btn quiet" data-go="contact">${esc(c.hero.primary)}</button></div>`;
+  $('homeSections').innerHTML = `
+  <section class="sec" data-screen-label="How it works"><div class="wrap">
+    <div><p class="eb">${esc(s.eyebrow)}</p>${title(s.title, s.accent)}<p class="lead">${esc(s.lead)}</p></div>
+    <div class="steps3">${s.items.map(i => `<div class="s"><span class="n">${i.n}</span><h3>${esc(i.name)}</h3><p>${esc(i.body)}</p></div>`).join('')}</div>
+    <button class="btn quiet" data-go="approach">${esc(UI[lang].nav.approach)}</button>
+  </div></section>
+  <section class="sec card-tone" data-screen-label="Programs"><div class="wrap">
+    <div><p class="eb">${esc(t.eyebrow)}</p>${title(t.title, t.accent)}<p class="lead">${esc(t.lead)}</p></div>
+    <div class="grid3">${prog(p.project)}${prog(p.workshop)}${prog(p.intensive)}</div>
+    <button class="btn quiet" data-go="programs">${esc(t.cta)}</button>
+  </div></section>
+  <section class="sec" data-screen-label="Research"><div class="wrap"><div class="split">
+    <div><p class="eb">${esc(r.eyebrow)}</p>${title(r.title, r.accent)}</div>
+    <div class="stack">
+      <div class="card cite"><p class="f">${esc(r.finding)}</p><span class="who">${esc(r.citation)}</span><p class="note">${esc(r.note)}</p></div>
+      <div class="card cite"><p class="f">${esc(r.finding2)}</p><span class="who">${esc(r.citation2)}</span><p class="note">${esc(r.note2)}</p></div>
+    </div>
+  </div></div></section>
+  <section class="sec closing" data-screen-label="Closing"><div class="wrap">
+    <div>${title(cl.title, cl.accent)}<p class="lead">${esc(cl.lead)}</p></div>
+    <button class="btn ondark" data-go="contact">${esc(cl.cta)}</button>
+  </div></section>`;
+  $('fMark').textContent = lang === 'bg' ? 'Морана' : 'Morana';
+  $('fTag').textContent = c.hero.title.join('');
+  $('fNav').innerHTML = ['programs','approach','about','contact'].map(k => `<button class="link" data-go="${k}">${esc(UI[lang].nav[k])}</button>`).join('');
+  $('fLegal').textContent = '© 2026 Morana';
+}
+function renderCopy() {
+  const c = MoranaCopy[lang], u = UI[lang];
+  document.documentElement.lang = lang;
+  document.querySelector('.wordmark').textContent = lang === 'bg' ? 'Морана' : 'Morana';
+  document.querySelectorAll('header nav .link').forEach(b => { b.textContent = u.nav[b.dataset.go]; b.setAttribute('aria-current', b.dataset.go === page ? 'page' : 'false'); });
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  orbits.forEach(o => o.label.textContent = u.nav[o.s.page]);
+  $('heroEyebrow').textContent = c.hero.eyebrow;
+  $('heroTitle').innerHTML = `${esc(c.hero.title[0])}<em>${esc(c.hero.title[1])}</em>${esc(c.hero.title[2])}`;
+  $('heroHint').textContent = u.hint;
+  $('heroPrimary').textContent = c.hero.primary; $('heroSecondary').textContent = c.hero.secondary;
+  renderHome(c);
+  if (page) $('panelInner').innerHTML = `<button class="back" data-go="">${esc(u.back)}</button>` + pages[page](c);
+  const f = $('cform'); if (f) f.addEventListener('submit', e => { e.preventDefault(); sent = true; renderCopy(); });
+}
+
+/* ---------- routing + camera flight ---------- */
+let flight = null;
+const ease = t => { // cubic-bezier(.2,.8,.2,1) approximation
+  let lo = 0, hi = 1, x; for (let i = 0; i < 20; i++) { x = (lo + hi) / 2; const bx = 3*(1-x)*(1-x)*x*.2 + 3*(1-x)*x*x*.2 + x*x*x; bx < t ? lo = x : hi = x; }
+  return 3*(1-x)*(1-x)*x*.8 + 3*(1-x)*x*x + x*x*x;
+};
+function go(p, push = true) {
+  if (!(p in pages)) p = '';
+  if (p === page) return;
+  if (p && scrollY > 2) {
+    if (reduce) window.scrollTo(0, 0);
+    else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const start = performance.now();
+      const wait = () => (scrollY <= 2 || performance.now() - start > 1500) ? (window.scrollTo(0, 0), go(p, push)) : requestAnimationFrame(wait);
+      return requestAnimationFrame(wait);
+    }
+  }
+  if (!home) home = { pos: cam.position.clone(), target: controls.target.clone() };
+  page = p; sent = false;
+  document.body.classList.toggle('open', !!p);
+  $('panel').setAttribute('aria-hidden', !p);
+  renderCopy();
+  $('panel').scrollTop = 0;
+  controls.enabled = !p;
+  controls.autoRotate = !p && !reduce;
+  flight = { t0: performance.now(), fromPos: cam.position.clone(), fromTarget: controls.target.clone(), dur: reduce ? 1 : 1400 };
+  if (push) history.pushState(null, '', p ? '#' + p : location.pathname + location.search);
+}
+function destFor(p) {
+  if (!p) return home;
+  const o = orbits.find(o => o.s.page === p);
+  const wp = o.ball.getWorldPosition(new THREE.Vector3());
+  const sp = sun.getWorldPosition(new THREE.Vector3());
+  const out = wp.clone().sub(sp).setY(0).normalize();
+  const d = .42 + o.s.size * 6;
+  const pos = wp.clone().addScaledVector(out, d).add(new THREE.Vector3(0, d * .55, 0));
+  // shift look target so the planet sits in the uncovered left part of the view
+  const fwd = wp.clone().sub(pos).normalize();
+  const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0,1,0)).normalize();
+  const shift = innerWidth > 760 ? Math.min(600, innerWidth) / innerWidth * d * .62 : 0;
+  return { pos, target: wp.clone().addScaledVector(right, shift) };
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-go]'); if (t) { e.preventDefault(); go(t.dataset.go); }
+  const l = e.target.closest('[data-lang]'); if (l) { lang = l.dataset.lang; renderCopy(); }
+});
+addEventListener('popstate', () => go(location.hash.slice(1), false));
+addEventListener('keydown', e => { if (e.key === 'Escape' && page) go(''); });
+
+/* ---------- picking ---------- */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const hits = orbits.map(o => o.hit);
+let hover = null, down = null;
+function pick(e) {
+  const r = stage.getBoundingClientRect();
+  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, cam);
+  const h = ray.intersectObjects(hits, false)[0];
+  return h ? h.object.userData.page : null;
+}
+stage.addEventListener('pointermove', e => { if (page) return; hover = pick(e); stage.style.cursor = hover ? 'pointer' : ''; });
+stage.addEventListener('pointerdown', e => down = [e.clientX, e.clientY]);
+stage.addEventListener('pointerup', e => {
+  if (!down || page) return;
+  const moved = Math.hypot(e.clientX - down[0], e.clientY - down[1]); down = null;
+  if (moved < 5) { const p = pick(e); if (p) go(p); }
+});
+
+/* ---------- loop ---------- */
+let sim = 0, rate = 1, last = performance.now();
+const v = new THREE.Vector3(), camRight = new THREE.Vector3(), sunS = { x:0, y:0, r:0 };
+const homeFilm = () => innerWidth > 760 ? -7 : 0;
+cam.filmOffset = homeFilm();
+function tick(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  rate += ((page ? 0 : 1) - rate) * Math.min(1, dt * 2.2);
+  if (!reduce) sim += dt * rate;
+  { const r = stage.getBoundingClientRect(); camRight.setFromMatrixColumn(cam.matrixWorld, 0);
+    const c = sun.getWorldPosition(new THREE.Vector3()), e = c.clone().addScaledVector(camRight, .09 * 1.35);
+    c.project(cam); e.project(cam);
+    sunS.x = (c.x + 1) / 2 * r.width; sunS.y = (1 - c.y) / 2 * r.height; sunS.r = Math.abs(e.x - c.x) / 2 * r.width; }
+  for (const o of orbits) {
+    o.carrier.rotation.y = o.s.phase + o.s.dir * (sim / o.s.period) * Math.PI * 2;
+    if (o.moonPivot) o.moonPivot.rotation.y = (sim / 4.2) * Math.PI * 2;
+    const want = (hover === o.s.page || page === o.s.page) ? 1.3 : 1;
+    o.scale += (want - o.scale) * Math.min(1, dt * 10); o.ball.scale.setScalar(o.scale);
+    o.label.classList.toggle('hot', hover === o.s.page);
+    const r = stage.getBoundingClientRect();
+    camRight.setFromMatrixColumn(cam.matrixWorld, 0);
+    o.ball.getWorldPosition(v).addScaledVector(camRight, o.s.size * (o.s.ring ? 1.9 : 1.3)).project(cam);
+    let x = (v.x + 1) / 2 * r.width + 6;
+    const y = (1 - v.y) / 2 * r.height;
+    o.ball.getWorldPosition(v).addScaledVector(camRight, -o.s.size * (o.s.ring ? 1.9 : 1.3)).project(cam);
+    const xl = (v.x + 1) / 2 * r.width - 6;
+    const w = o.label.offsetWidth, hh = 14;
+    const hitsSun = (x0) => { const cx = Math.max(x0, Math.min(sunS.x, x0 + w)), cy = Math.max(y - hh, Math.min(sunS.y, y + hh)); return Math.hypot(cx - sunS.x, cy - sunS.y) < sunS.r + 6; };
+    let flip = false, dim = false;
+    if (hitsSun(x)) { if (!hitsSun(xl - w)) { flip = true; x = xl - w; } else dim = true; }
+    o.label.classList.toggle('flip', flip); o.label.classList.toggle('dim', dim);
+    o.label.style.transform = `translate(${x}px, ${y}px) translateY(-50%)`;
+    o.label.style.visibility = v.z < 1 ? 'visible' : 'hidden';
+  }
+  const p = reduce ? .5 : (sim % 7) / 7, e = 1 - Math.pow(1 - p, 2.2);
+  const r = .13 + e * .62; pulse.scale.set(r, r, 1);
+  if (p < .5) tmp.lerpColors(cSage, cOlive, p*2); else tmp.lerpColors(cOlive, cPlum, (p-.5)*2);
+  M.pulse.color.copy(tmp); M.pulse.emissive.copy(tmp);
+  M.pulse.opacity = reduce ? .6 : Math.min(1, p*6) * (1 - p);
+
+  const wantFilm = page ? 0 : homeFilm();
+  if (Math.abs(cam.filmOffset - wantFilm) > .001) { cam.filmOffset += (wantFilm - cam.filmOffset) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); }
+  if (flight) {
+    const k = ease(Math.min(1, (now - flight.t0) / flight.dur));
+    const d = destFor(page);
+    cam.position.lerpVectors(flight.fromPos, d.pos, k);
+    controls.target.lerpVectors(flight.fromTarget, d.target, k);
+    cam.lookAt(controls.target);
+    if (k >= 1 && !page) flight = null; // on a page, keep tracking the (slowing) planet
+  }
+  requestAnimationFrame(tick);
+}
+renderCopy();
+requestAnimationFrame(t => { last = t; requestAnimationFrame(tick); });
+setTimeout(() => {
+  const sp = sun.getWorldPosition(new THREE.Vector3());
+  home = { pos: sp.clone().add(new THREE.Vector3(0, .95, 1.75)), target: sp };
+  cam.position.copy(home.pos); controls.target.copy(home.target); cam.lookAt(sp); controls.update();
+  if (location.hash) go(location.hash.slice(1), false);
+}, 60);
+</script>
+</body>
+</html>
